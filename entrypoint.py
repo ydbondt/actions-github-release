@@ -2,9 +2,11 @@
 
 from github import Github
 import os
+import re
 
 # Settings
 wanted_release = os.getenv('type')
+tag_regex = os.getenv('tag_regex')
 repository = os.getenv('repository')
 token = os.getenv('token', None)
 
@@ -24,20 +26,21 @@ def output(release):
 
 # Releases parsing
 for release in releases:
-    if wanted_release == 'stable':
-        if release.prerelease == 0 and release.draft == 0:
+    if re.match(tag_regex, release.tag_name):
+        if wanted_release == 'stable':
+            if release.prerelease == 0 and release.draft == 0:
+                output(release)
+                break
+        elif wanted_release == 'prerelease':
+            if release.prerelease == 1:
+                output(release)
+                break
+        elif wanted_release == 'latest':
             output(release)
             break
-    elif wanted_release == 'prerelease':
-        if release.prerelease == 1:
-            output(release)
-            break
-    elif wanted_release == 'latest':
-        output(release)
-        break
-    elif wanted_release == 'nodraft':
-        if release.draft == 0:
-            output(release)
-            break
+        elif wanted_release == 'nodraft':
+            if release.draft == 0:
+                output(release)
+                break
     else:
         print('Can\'t get release')
